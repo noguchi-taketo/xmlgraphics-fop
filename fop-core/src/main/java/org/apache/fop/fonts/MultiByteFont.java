@@ -312,14 +312,31 @@ public class MultiByteFont extends CIDFont implements Substitutable, Positionabl
     // [TBD] - needs optimization, i.e., change from linear search to binary search
     private int findCharacterFromGlyphIndex(int gi, boolean augment) {
         int cc = 0;
+        int tmp = 0;
         for (CMapSegment segment : cmap) {
             int s = segment.getGlyphStartIndex();
             int e = s + (segment.getUnicodeEnd() - segment.getUnicodeStart());
             if ((gi >= s) && (gi <= e)) {
-                cc = segment.getUnicodeStart() + (gi - s);
-                break;
+                final int hit = segment.getUnicodeStart() + (gi - s);
+
+                if (0x2E81 <= hit && hit <= 0x2EF3) {
+                     // CJK Radicals Supplement
+                     tmp = hit;
+                } else if(0x2F00 <= hit && hit <= 0x2FD5) {
+                     // Kangxi Radicals
+                     tmp = hit;
+                } else {
+                     cc = hit;
+                     break;
+                }
             }
         }
+
+        // find tmp only
+        if ((cc == 0) && (tmp != 0)) {
+            cc = tmp;
+        }
+
         if ((cc == 0) && augment) {
             cc = createPrivateUseMapping(gi);
         }
